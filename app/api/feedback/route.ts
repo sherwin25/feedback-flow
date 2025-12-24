@@ -27,11 +27,12 @@ export async function POST(request: Request) {
     }
 
     // AI Analysis
+    // AI Analysis
     const completion = await openai.chat.completions.create({
       messages: [
         {
           role: "system",
-          content: "You are a product manager assistant. Analyze the following user feedback. Categorize it as 'bug', 'feature', or 'other'. Determine sentiment as 'positive', 'neutral', or 'negative'. Return strictly JSON: { \"category\": \"...\", \"sentiment\": \"...\" }."
+          content: "You are a product manager assistant. Analyze the following user feedback. 1. Categorize it as 'bug', 'feature', or 'other'. 2. Determine sentiment as 'positive', 'neutral', or 'negative'. 3. Determine 'is_toxic' as boolean (true if rude, offensive, or hate speech). Return strictly JSON: { \"category\": \"...\", \"sentiment\": \"...\", \"is_toxic\": boolean }."
         },
         { role: "user", content }
       ],
@@ -40,6 +41,15 @@ export async function POST(request: Request) {
     });
 
     const analysis = JSON.parse(completion.choices[0].message.content || '{}');
+    
+    // Moderation Check
+    if (analysis.is_toxic) {
+      return NextResponse.json(
+        { error: "That's a bit rude to post... let's keep it constructive!" }, 
+        { status: 400 }
+      );
+    }
+
     const category = analysis.category || 'other';
     const sentiment = analysis.sentiment || 'neutral';
 
