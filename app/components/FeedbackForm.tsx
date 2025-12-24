@@ -5,20 +5,32 @@ import { Loader2 } from "lucide-react";
 export function FeedbackForm({ onSubmitted }: { onSubmitted: () => void }) {
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!content.trim()) return;
     setLoading(true);
+    setError("");
+    
     try {
-      await fetch('/api/feedback', {
+      const res = await fetch('/api/feedback', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content }),
       });
+      
+      const data = await res.json();
+      
+      if (!res.ok) {
+        throw new Error(data.error || "Something went wrong");
+      }
+      
       setContent("");
       onSubmitted();
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setError(err.message || "Failed to submit feedback");
     } finally {
       setLoading(false);
     }
@@ -34,6 +46,13 @@ export function FeedbackForm({ onSubmitted }: { onSubmitted: () => void }) {
         onChange={(e) => setContent(e.target.value)}
         disabled={loading}
       />
+      
+      {error && (
+        <div className="p-3 text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg">
+          Error: {error}
+        </div>
+      )}
+
       <div className="flex justify-end">
         <button
           type="submit"
