@@ -2,7 +2,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
-import { Check, Bug, Lightbulb, MessageSquare } from "lucide-react";
+import { Check, Bug, Lightbulb, MessageSquare, Trash2 } from "lucide-react";
 
 type Feedback = {
   id: number;
@@ -25,6 +25,29 @@ export function FeedbackList({ refreshKey }: { refreshKey: number }) {
       })
       .finally(() => setLoading(false));
   }, [refreshKey]);
+
+  async function handleDelete(id: number) {
+    const code = prompt("Enter Admin Passcode to delete:");
+    if (!code) return;
+
+    try {
+      const res = await fetch('/api/feedback', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, passcode: code }),
+      });
+
+      if (res.ok) {
+        setItems(prev => prev.filter(item => item.id !== id));
+      } else {
+        const data = await res.json();
+        alert(data.error || "Failed to delete");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Error deleting feedback");
+    }
+  }
 
   if (loading && items.length === 0) return <div className="text-center text-slate-400 py-10">Loading feedback...</div>;
 
@@ -56,9 +79,18 @@ export function FeedbackList({ refreshKey }: { refreshKey: number }) {
                 {item.category === 'other' && <MessageSquare size={12} />}
                 {item.category}
               </span>
-              <span className="text-[10px] text-slate-400">
-                {new Date(item.created_at).toLocaleDateString()}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] text-slate-400">
+                  {new Date(item.created_at).toLocaleDateString()}
+                </span>
+                <button 
+                  onClick={() => handleDelete(item.id)}
+                  className="text-slate-300 hover:text-red-500 transition-colors p-1"
+                  title="Admin Delete"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             </div>
             <p className="text-slate-700 text-sm leading-relaxed">{item.content}</p>
           </motion.div>

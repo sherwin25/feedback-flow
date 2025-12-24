@@ -67,3 +67,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }
+
+export async function DELETE(request: Request) {
+  try {
+    const { id, passcode } = await request.json();
+
+    if (passcode !== 'winiscool') {
+      return NextResponse.json({ error: 'Invalid Passcode! Nice try.' }, { status: 401 });
+    }
+
+    if (!id) {
+       return NextResponse.json({ error: 'ID required' }, { status: 400 });
+    }
+
+    const sql = neon(process.env.DATABASE_URL!);
+    await sql`DELETE FROM feedback WHERE id = ${id}`;
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json({ error: String(error) }, { status: 500 });
+  }
+}
