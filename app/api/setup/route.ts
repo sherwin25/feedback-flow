@@ -15,7 +15,9 @@ export async function GET() {
         status VARCHAR(50) DEFAULT 'new',
         created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
       );
-      
+    `;
+
+    await sql`
       CREATE TABLE IF NOT EXISTS rate_limits (
         ip VARCHAR(255) PRIMARY KEY,
         last_request TIMESTAMP WITH TIME ZONE
