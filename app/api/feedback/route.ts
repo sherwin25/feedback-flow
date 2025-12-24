@@ -26,7 +26,32 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Content is required' }, { status: 400 });
     }
 
-    // AI Analysis
+    // Rate Limiting
+    const ip = request.headers.get("x-forwarded-for") || "127.0.0.1";
+    const sql = neon(process.env.DATABASE_URL!);
+    
+    // Check last request
+    const rateLimit = await sql`SELECT last_request FROM rate_limits WHERE ip = ${ip}`;
+    
+    if (rateLimit.length > 0) {
+      const lastRequest = new Date(rateLimit[0].last_request).getTime();
+      const now = new Date().getTime();
+      if (now - lastRequest < 60000) { // 60 seconds
+        return NextResponse.json(
+          { error: "Whoa, slow down! You can only post once per minute." }, 
+          { status: 429 }
+        );
+      }
+    }
+
+    // Update timestamp
+    await sql`
+      INSERT INTO rate_limits (ip, last_request) 
+      VALUES (${ip}, NOW()) 
+      ON CONFLICT (ip) 
+      DO UPDATE SET last_request = NOW();
+    `;
+
     // AI Analysis
     const completion = await openai.chat.completions.create({
       messages: [
@@ -54,7 +79,6 @@ export async function POST(request: Request) {
     const sentiment = analysis.sentiment || 'neutral';
 
     // DB Insert
-    const sql = neon(process.env.DATABASE_URL!);
     const result = await sql`
       INSERT INTO feedback (content, category, sentiment)
       VALUES (${content}, ${category}, ${sentiment})
