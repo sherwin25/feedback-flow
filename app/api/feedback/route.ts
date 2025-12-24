@@ -1,4 +1,4 @@
-import { sql } from '@vercel/postgres';
+import { neon } from '@neondatabase/serverless';
 import { NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
@@ -10,10 +10,11 @@ export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const { rows } = await sql`SELECT * FROM feedback ORDER BY created_at DESC LIMIT 50`;
+    const sql = neon(process.env.DATABASE_URL!);
+    const rows = await sql`SELECT * FROM feedback ORDER BY created_at DESC LIMIT 50`;
     return NextResponse.json({ data: rows });
   } catch (error) {
-    return NextResponse.json({ error }, { status: 500 });
+    return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }
 
@@ -43,13 +44,14 @@ export async function POST(request: Request) {
     const sentiment = analysis.sentiment || 'neutral';
 
     // DB Insert
+    const sql = neon(process.env.DATABASE_URL!);
     const result = await sql`
       INSERT INTO feedback (content, category, sentiment)
       VALUES (${content}, ${category}, ${sentiment})
       RETURNING *;
     `;
 
-    return NextResponse.json({ data: result.rows[0] }, { status: 201 });
+    return NextResponse.json({ data: result[0] }, { status: 201 });
   } catch (error) {
     console.error(error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
