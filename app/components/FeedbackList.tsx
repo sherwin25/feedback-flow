@@ -70,7 +70,7 @@ export function FeedbackList({ refreshKey }: { refreshKey: number }) {
             {!isAdmin ? (
                 <button 
                     onClick={handleAdminLogin}
-                    className="text-xs text-slate-400 hover:text-slate-600 underline"
+                    className="text-sm p-2 text-slate-400 hover:text-slate-600 underline"
                 >
                     Admin Login
                 </button>
