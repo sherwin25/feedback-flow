@@ -7,7 +7,7 @@ export default function Home() {
   const [refreshKey, setRefreshKey] = useState(0);
 
   return (
-    <main className="min-h-screen py-20 px-6 bg-slate-50">
+    <main className="min-h-screen py-24 px-6 bg-slate-50">
       <div className="mx-auto max-w-4xl space-y-12">
         <header className="text-center space-y-8">
           <div className="space-y-2">
